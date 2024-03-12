@@ -1,5 +1,5 @@
 import {Button, Div, FormItem, FormLayoutGroup, FormStatus, Header, SimpleCell, Spinner} from "@vkontakte/vkui";
-import {useQuery,useQueryClient} from "@tanstack/react-query";
+import {useMutation, useQuery} from "@tanstack/react-query";
 import {SubmitHandler, useForm} from 'react-hook-form';
 import {object, string} from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
@@ -23,7 +23,6 @@ const schema = object().shape({
 
 
 const NameForAge = () => {
-    const queryClient = useQueryClient();
         const [age, setAge] = useState<number | null>(null);
         const {
             register,
@@ -34,7 +33,7 @@ const NameForAge = () => {
         })
 
 
-        const {data,  isLoading, error, refetch} = useQuery<Age>({
+        const {data,  isLoading, error} = useQuery<Age>({
             queryKey: ['name-for-age'],
             queryFn: async ({queryKey}) => {
                 const name = queryKey[1] as string;
@@ -50,21 +49,23 @@ const NameForAge = () => {
             refetchOnWindowFocus: false,
             enabled: false,
         })
-    const onSubmit: SubmitHandler<IFormInput> = async (data) => {
-        const { name } = data;
-        console.log(name);
-        if (name) {
-            queryClient.setQueryData(['name-for-age', name], () => ({ name: data.name }));
-            refetch({ throwOnError: true, cancelRefetch: true }).then(() => console.log(data));
+
+    const mutation = useMutation({
+        mutationFn: async ({name}: IFormInput) => {
+            const res = await fetch(`https://api.agify.io/?name=${name}`);
+            console.log(res)
+            return await res.json();
         }
+    })
+    const onSubmit: SubmitHandler<IFormInput> = (data) => {
+        mutation.mutate(data)
     };
 
-
-        useEffect(() => {
-            if (data) {
-                setAge(data.age);
-            }
-        }, [data]);
+    useEffect(() => {
+        if (data) {
+            setAge(data.age);
+        }
+    }, [data]);
 
         return (
             <SimpleCell multiline>
