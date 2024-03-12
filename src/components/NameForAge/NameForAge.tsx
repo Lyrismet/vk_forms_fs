@@ -22,9 +22,12 @@ const schema = object().shape({
 });
 
 const NameForAge = () => {
-        const [age, setAge] = useState<number | null>(null);
 
-    const {
+        const [age, setAge] = useState<number | null>(null);
+        const [name, setName] = useState("");
+        const [nameEntered, setNameEntered] = useState(false);
+
+        const {
             register,
             handleSubmit,
             formState: {errors}
@@ -32,23 +35,38 @@ const NameForAge = () => {
             resolver: yupResolver(schema),
         })
 
-    const {mutate, data, isPending, error} = useMutation<Age, Error, IFormInput>({
-        mutationFn: async ({name}: IFormInput) => {
-            const res = await fetch(`https://api.agify.io/?name=${name}`);
-            if (!res.ok) {
-                throw new Error(await res.text());
+        const {mutate, data, isPending, error} = useMutation<Age, Error, IFormInput>({
+            mutationFn: async ({name}: IFormInput) => {
+                const res = await fetch(`https://api.agify.io/?name=${name}`);
+                if (!res.ok) {
+                    throw new Error(await res.text());
+                }
+                return await res.json();
             }
-            return await res.json();
-        }
-    })
-    const onSubmit: SubmitHandler<IFormInput> = (data) => {
-        mutate(data)
-    };
-    useEffect(() => {
-        if (data) {
-            setAge(data.age);
-        }
-    }, [data]);
+        })
+
+        const onSubmit: SubmitHandler<IFormInput> = (data) => {
+            mutate(data)
+        };
+        useEffect(() => {
+            if (nameEntered) {
+                const timeoutId = setTimeout(() => {
+                    onSubmit({name});
+                }, 3000);
+                return () => clearTimeout(timeoutId);
+            }
+        }, [name, nameEntered]);
+
+        const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            const {value} = event.target;
+            setName(value);
+            setNameEntered(true);
+        };
+        useEffect(() => {
+            if (data) {
+                setAge(data.age);
+            }
+        }, [data]);
 
         return (
             <SimpleCell multiline>
@@ -60,6 +78,7 @@ const NameForAge = () => {
                                 className="vkuiFormField vkuiFormField--mode-default vkuiFormField--sizeY-none vkui-focus-visible vkuiInput vkuiInput--sizeY-none">
                             <input className="vkuiTypography vkuiInput__el vkuiText vkuiText--sizeY-none"
                                    {...register("name",)}
+                                   onChange={handleInputChange}
                                    type="text"/>
 
                             </span>{errors.name && <FormStatus mode="error" header={errors.name.message}></FormStatus>}
