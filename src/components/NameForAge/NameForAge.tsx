@@ -77,7 +77,11 @@ const NameForAge = () => {
                 </FormLayoutGroup>
                 {isPending && <Spinner size="regular"/>}
                 {error && <Div>Ошибка при получении данных</Div>}
-                {age && <Div>Возраст: {age}</Div>}
+                {age !== null ? (
+                    <Div>Возраст: {age}</Div>
+                ) : (
+                    data && !isPending && !error && <Div>Ошибка: возраст не найден</Div>
+                )}
             </SimpleCell>
         )
             ;
