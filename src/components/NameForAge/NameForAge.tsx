@@ -26,6 +26,7 @@ const NameForAge = () => {
         const [age, setAge] = useState<number | null>(null);
         const [name, setName] = useState("");
         const [nameEntered, setNameEntered] = useState(false);
+    const [lastSubmittedName, setLastSubmittedName] = useState("");
 
         const {
             register,
@@ -46,7 +47,10 @@ const NameForAge = () => {
         })
 
         const onSubmit: SubmitHandler<IFormInput> = (data) => {
-            mutate(data)
+            if (data.name !== lastSubmittedName) {
+                mutate(data);
+                setLastSubmittedName(data.name);
+            }
         };
         useEffect(() => {
             if (nameEntered) {
