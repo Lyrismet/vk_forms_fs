@@ -31,9 +31,10 @@ const NameForAge = () => {
         const {
             register,
             handleSubmit,
-            formState: {errors}
+            formState: {errors, isValid},
         } = useForm<IFormInput>({
             resolver: yupResolver(schema),
+            mode: 'onTouched',
         })
 
         const {mutate, data, isPending, error} = useMutation<Age, Error, IFormInput>({
@@ -46,10 +47,15 @@ const NameForAge = () => {
             }
         })
 
-        const onSubmit: SubmitHandler<IFormInput> = (data) => {
-            if (data.name !== lastSubmittedName) {
-                mutate(data);
-                setLastSubmittedName(data.name);
+        const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+            try {
+                await schema.validate(data);
+                if (data.name !== lastSubmittedName) {
+                    mutate(data);
+                    setLastSubmittedName(data.name);
+                }
+            } catch (e) {
+                console.error(e);
             }
         };
         useEffect(() => {
@@ -89,7 +95,7 @@ const NameForAge = () => {
                         </FormItem>
                         <FormItem>
                             <Button
-                                disabled={!!errors.name || isPending}
+                                disabled={!isValid || isPending}
                                 stretched
                                 mode="secondary"
                                 type="submit"
