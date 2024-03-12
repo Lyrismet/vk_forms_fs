@@ -21,10 +21,10 @@ const schema = object().shape({
         .matches(/^[\s\S]*\S[\s\S]*$/, "Поле не должно быть пустым")
 });
 
-
 const NameForAge = () => {
         const [age, setAge] = useState<number | null>(null);
-        const {
+
+    const {
             register,
             handleSubmit,
             formState: {errors}
@@ -34,16 +34,16 @@ const NameForAge = () => {
 
     const {mutate, data, isPending, error} = useMutation<Age, Error, IFormInput>({
         mutationFn: async ({name}: IFormInput) => {
-
             const res = await fetch(`https://api.agify.io/?name=${name}`);
-            console.log(res)
+            if (!res.ok) {
+                throw new Error(await res.text());
+            }
             return await res.json();
         }
     })
     const onSubmit: SubmitHandler<IFormInput> = (data) => {
         mutate(data)
     };
-
     useEffect(() => {
         if (data) {
             setAge(data.age);
