@@ -1,5 +1,5 @@
 import {Button, Div, FormItem, FormLayoutGroup, FormStatus, Header, SimpleCell, Spinner} from "@vkontakte/vkui";
-import {useQuery} from "@tanstack/react-query";
+import {useQuery,useQueryClient} from "@tanstack/react-query";
 import {SubmitHandler, useForm} from 'react-hook-form';
 import {object, string} from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
@@ -21,7 +21,9 @@ const schema = object().shape({
         .matches(/^[\s\S]*\S[\s\S]*$/, "Поле не должно быть пустым")
 });
 
+
 const NameForAge = () => {
+    const queryClient = useQueryClient();
         const [age, setAge] = useState<number | null>(null);
         const {
             register,
@@ -32,20 +34,33 @@ const NameForAge = () => {
         })
 
 
-        const {data, refetch, isLoading, error} = useQuery<Age>({
+        const {data,  isLoading, error, refetch} = useQuery<Age>({
             queryKey: ['name-for-age'],
             queryFn: async ({queryKey}) => {
-                const name = queryKey[1];
+                const name = queryKey[1] as string;
+                console.log(name)
+                if (!name) {
+                    throw new Error('Не удалось получить имя для запроса');
+                }
+                console.log(name)
                 const res = await fetch(`https://api.agify.io/?name=${name}`);
                 return await res.json();
             },
+            staleTime: 1000,
             refetchOnWindowFocus: false,
             enabled: false,
         })
-    const onSubmit: SubmitHandler<IFormInput> = async ({name}) => refetch(name)
+    const onSubmit: SubmitHandler<IFormInput> = async (data) => {
+        const { name } = data;
+        console.log(name);
+        if (name) {
+            queryClient.setQueryData(['name-for-age', name], () => ({ name: data.name }));
+            refetch({ throwOnError: true, cancelRefetch: true }).then(() => console.log(data));
+        }
+    };
 
 
-    useEffect(() => {
+        useEffect(() => {
             if (data) {
                 setAge(data.age);
             }
@@ -55,7 +70,7 @@ const NameForAge = () => {
             <SimpleCell multiline>
                 <Header multiline>Введите имя, чтобы узнать возраст</Header>
                 <FormLayoutGroup mode="vertical">
-                    <form action="" onSubmit={handleSubmit((data) => onSubmit(data))}>
+                    <form action="" onSubmit={handleSubmit(onSubmit)}>
                         <FormItem htmlFor="name-for-age">
                             <span
                                 className="vkuiFormField vkuiFormField--mode-default vkuiFormField--sizeY-none vkui-focus-visible vkuiInput vkuiInput--sizeY-none">
