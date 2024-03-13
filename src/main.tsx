@@ -6,7 +6,10 @@ import {
 import '@vkontakte/vkui/dist/vkui.css';
 import App from './App';
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
+import vkBridge from '@vkontakte/vk-bridge';
 
+
+vkBridge.send('VKWebAppInit');
 const queryClient = new QueryClient();
 const container = document.getElementById('root');
 const root = createRoot(container!);
